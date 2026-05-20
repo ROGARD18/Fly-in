@@ -12,7 +12,7 @@ class ZoneModel(BaseModel):
     name: str = Field(frozen=True)
     x: int = Field(frozen=True)
     y: int = Field(frozen=True)
-    zone_type: ZoneType = Field(default="normal", frozen=True)
+    zone_type: ZoneType = Field(default="normal", alias="zone", frozen=True)
     color: Optional[str] = Field(default=None, frozen=True)
     max_capacity: int = Field(default=1, ge=1, frozen=True)
 
