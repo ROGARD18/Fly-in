@@ -1,0 +1,31 @@
+. = n'import quel charactere
+\w (world) = charactere de mot (lettre, chiffre ou tiret du bas)
+\d (digit) = digit
+\s (space) = space
+
+*QUANTITATIFS:
+
++ = 1x ou plus (\w+ = Un mot d'une lettre ou plus)
+* = 0x ou plus (.* = n'importe quel charactere peu import la taille, meme vide)
+? = 0 ou 1 cela rend l'element optionnel
+
+*GROUPES DE CAPTURES:
+()  ils disent a la regex: Trouve ce motif, mais sauvegarde ce qu'il y a entre les
+    parentheses pour que je puisse l'utiliser plus tard.
+
+*Explication de la REGEX: re.search(r"\[(.*?)\]", line)
+
+- r"..." (Raw string) = il dit a Python de ne pas interpreter les antislashs \, et
+  de les laisser pour la regex
+
+- \[ = On cherche le [ mais les crochets servent a faire des listes en Regex donc on
+  utilise \ pour chercher le charactere
+
+- () = On dit a Python: Ce qu'il ce trouve ici garde le moi en memoire
+
+- .* = n'importe quel charactere, repete pleins de fois
+
+- ? = Le mode lazy. Sans lui, si on a [Zone=A] et [color=B], la regex lirait tout d'un coup
+  du premier crochet au tout dernier. Le ? dit: "Arrete toi au tout premier ]".
+
+- \] = Cherche le vrai charactere ]
