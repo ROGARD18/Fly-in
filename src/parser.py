@@ -13,6 +13,11 @@ class ConfigParser:
         self.nb_drone: int = 0
         self.zones: Dict[str, ZoneModel] = {}
         self.connections: List[ConnectionModel] = []
+        try:
+            self.parse()
+        except Exception as e:
+            print("PARSE ERROR !")
+            print(f"<{e}>")
 
     def _parse_metadata(self, metadata_str: str) -> Dict[str, Any] | None:
         metadata: Dict[str, Any] = {}
@@ -31,6 +36,8 @@ class ConfigParser:
         return metadata
 
     def parse(self) -> Tuple[int, Dict[str, ZoneModel], List[ConnectionModel]]:
+        start_count: int = 0
+        end_count: int = 0
         with open(self.file_path, "r") as f:
             for line_id, line in enumerate(f, 1):
                 line = line.strip()
@@ -54,10 +61,17 @@ class ConfigParser:
                         metadata_match.group(0))
                     line = re.sub(r"\[.*?\]", "", line).strip()
 
-                if line.startswith("start_hub", "end_hub", "hub"):
+                if line.startswith(("start_hub", "end_hub", "hub")):
                     prefix, rest = line.split(":", 1)
                     parts = rest.strip().split()
 
+                    if prefix == "start_hub":
+                        start_count += 1
+                    elif prefix == "end_hub":
+                        end_count += 1
+                    if start_count > 1 or end_count > 1:
+                        raise MapParserError(f"Line {line_id}: start "
+                                             "ou end hub: multiple times")
                     if len(parts) < 3:
                         raise MapParserError(f"Line {line_id}: Invalid zone "
                                              "definition.")
