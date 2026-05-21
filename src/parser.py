@@ -15,21 +15,21 @@ class ConfigParser:
         self.connections: List[ConnectionModel] = []
         self.parse()
 
-    def _parse_metadata(self, metadata_str: str) -> Dict[str, Any] | None:
-        metadata: Dict[str, Any] = {}
-        if not metadata_str:
+    def _parse_options(self, options_str: str) -> Dict[str, Any] | None:
+        options: Dict[str, Any] = {}
+        if not options_str:
             return None
 
-        metadata_str = metadata_str.strip("[]")
-        pairs = re.findall(r"(\w+)(?:[=\s](\w+))?", metadata_str)
+        options_str = options_str.strip("[]")
+        pairs = re.findall(r"(\w+)(?:[=\s](\w+))?", options_str)
         for key, value in pairs:
             if not value:
                 continue
             if value.isdigit():
-                metadata[key] = int(value)
+                options[key] = int(value)
             else:
-                metadata[key] = value
-        return metadata
+                options[key] = value
+        return options
 
     def parse(self) -> Tuple[int, Dict[str, ZoneModel], List[ConnectionModel]]:
         start_count: int = 0
@@ -49,12 +49,12 @@ class ConfigParser:
                         raise MapParserError(f"Line {line_id}: Expected "
                                              "'nb_drones:' as the first line.")
 
-                metadata_match: Match[str] | None = re.search(r"\[(.*?)\]",
+                options_match: Match[str] | None = re.search(r"\[(.*?)\]",
                                                               line)
-                metadata_dict = {}
-                if metadata_match:
-                    metadata_dict = self._parse_metadata(
-                        metadata_match.group(0))
+                options_dict = {}
+                if options_match:
+                    options_dict = self._parse_options(
+                        options_match.group(0))
                     line = re.sub(r"\[.*?\]", "", line).strip()
 
                 if line.startswith(("start_hub", "end_hub", "hub")):
@@ -74,10 +74,10 @@ class ConfigParser:
                     name, x, y = parts[0], int(parts[1]), int(parts[2])
 
                     if prefix == "start_hub" or prefix == "end_hub":
-                        metadata_dict["zone"] = "normal"
+                        options_dict["zone"] = "normal"
 
                     try:
-                        zone = ZoneModel(name=name, x=x, y=y, **metadata_dict)
+                        zone = ZoneModel(name=name, x=x, y=y, **options_dict)
                         self.zones[name] = zone
                     except Exception as e:
                         raise MapParserError(f"Line {line_id}: {str(e)}")
@@ -96,7 +96,7 @@ class ConfigParser:
                                              " refers to undefined zones.")
                     try:
                         connection = ConnectionModel(zone1=z1, zone2=z2,
-                                                     **metadata_dict)
+                                                     **options_dict)
                         self.connections.append(connection)
                     except Exception as e:
                         raise MapParserError(f"Line {line_id}: {str(e)}")

@@ -14,9 +14,7 @@ class Simulation:
 
     def valid_move(self, step: StepType) -> bool:
         zone, _ = step
-        return (
-            self.bookings.get(step, 0) < self.map.zones[zone].max_capacity
-            )
+        return self.bookings.get(step, 0) < self.map.zones[zone].max_capacity
 
     def init_drones(self) -> List[DroneModel]:
         nb_drones: int = self.map.nb_drones
@@ -24,10 +22,7 @@ class Simulation:
 
         for i in range(nb_drones):
             try:
-                drone: DroneModel = DroneModel(
-                    id=i,
-                    path=[]
-                )
+                drone: DroneModel = DroneModel(id=i)
             except DroneError as e:
                 raise DroneError(f"Error initializing drone {i}: {e}")
             drones.append(drone)

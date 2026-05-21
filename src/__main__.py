@@ -23,9 +23,10 @@ def main() -> None:
     # print(type(map_config))
     simu: Simulation = Simulation(map=map_config)
     print()
-    for zone in simu.map.zones:
-        zone = simu.map.zones.get(zone)
-        print(f"{zone.name} is {zone.distance} from goal")
+
+    from src.visualizer import Visualizer
+    visu: Visualizer = Visualizer(simu=simu)
+    visu.run()
 
 
 if __name__ == "__main__":
