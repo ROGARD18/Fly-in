@@ -10,7 +10,7 @@ class MapParserError(Exception):
 class ConfigParser:
     def __init__(self, file_path: str):
         self.file_path: str = file_path
-        self.nb_drone: int = 0
+        self.nb_drones: int = 0
         self.zones: Dict[str, ZoneModel] = {}
         self.connections: List[ConnectionModel] = []
         self.parse()
@@ -41,9 +41,9 @@ class ConfigParser:
                 if not line or line.startswith("#"):
                     continue
 
-                if self.nb_drone == 0:
+                if self.nb_drones == 0:
                     if line.startswith(("nb_drones:", "nb drones:")):
-                        self.nb_drone = int(line.split(":")[1].strip())
+                        self.nb_drones = int(line.split(":")[1].strip())
                         continue
                     else:
                         raise MapParserError(f"Line {line_id}: Expected "
@@ -100,4 +100,4 @@ class ConfigParser:
                         self.connections.append(connection)
                     except Exception as e:
                         raise MapParserError(f"Line {line_id}: {str(e)}")
-        return self.nb_drone, self.zones, self.connections
+        return self.nb_drones, self.zones, self.connections

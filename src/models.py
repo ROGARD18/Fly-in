@@ -5,6 +5,10 @@ ZoneType = Literal["normal", "blocked", "restricted", "priority"]
 StepType = Tuple[str, int]
 
 
+class DroneError(Exception):
+    pass
+
+
 class ZoneModel(BaseModel):
 
     model_config = {
