@@ -13,11 +13,7 @@ class ConfigParser:
         self.nb_drone: int = 0
         self.zones: Dict[str, ZoneModel] = {}
         self.connections: List[ConnectionModel] = []
-        try:
-            self.parse()
-        except Exception as e:
-            print("PARSE ERROR !")
-            print(f"<{e}>")
+        self.parse()
 
     def _parse_metadata(self, metadata_str: str) -> Dict[str, Any] | None:
         metadata: Dict[str, Any] = {}

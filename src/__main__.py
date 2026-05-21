@@ -5,8 +5,10 @@ from typing import Dict, List
 
 
 def main() -> None:
-    choice: int = int(input("What level you to do (1: easy, 2: "
-                            "medium, 3: hard) -> "))
+    choice: int = int(input("What level you to do (0: easy, 1: "
+                            "medium, 2: hard) -> "))
+    if choice != 1 and choice != 2 and choice != 0:
+        choice = 0
     files: List[str] = [
         "maps/easy/01_linear_path.txt",
         "maps/medium/01_dead_end_trap.txt",
@@ -20,11 +22,10 @@ def main() -> None:
         return
     # print(type(map_config))
     simu: Simulation = Simulation(map=map_config)
-    simu.determine_distance_to_goal()
     print()
     for zone in simu.map.zones:
-        print(type(simu.map.zones.get("zone")))
-        print(f"{zone} is {zone} from goal")
+        zone = simu.map.zones.get(zone)
+        print(f"{zone.name} is {zone.distance} from goal")
 
 
 if __name__ == "__main__":

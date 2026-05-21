@@ -18,8 +18,6 @@ class ZoneModel(BaseModel):
     max_capacity: int = Field(default=1, ge=1, frozen=True)
     distance: int = Field(default=0, ge=0)
 
-    neighbors: List[str] = Field(default_factory=list)
-
 
 class ConnectionModel(BaseModel):
 
