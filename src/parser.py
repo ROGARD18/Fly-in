@@ -7,6 +7,23 @@ class MapParserError(Exception):
     pass
 
 
+COLOR_MAP: dict[str, tuple[int, int, int]] = {
+    "red": (255, 0, 0),
+    "blue": (0, 0, 255),
+    "green": (0, 255, 0),
+    "yellow": (255, 255, 0),
+    "gray": (128, 128, 128),
+    "rainbow": (148, 0, 211),
+    "black": (0, 0, 0),
+    "white": (255, 255, 255),
+    "gold": (255, 215, 0),
+    "crimson": (220, 20, 60),
+    "darkred": (139, 0, 0),
+    "brown": (165, 42, 42),
+    "maroon": (128, 0, 0),
+}
+
+
 class ConfigParser:
     def __init__(self, file_path: str):
         self.file_path: str = file_path
@@ -14,6 +31,14 @@ class ConfigParser:
         self.zones: Dict[str, ZoneModel] = {}
         self.connections: List[ConnectionModel] = []
         self.parse()
+        self.goal_zone: str
+
+    def _parse_color(self, color_str: str) -> tuple[int, int, int]:
+        """Convertit une chaîne de caractères en tuple RGB."""
+        color_clean = color_str.lower().strip()
+
+        # Retourne la couleur si elle existe, sinon un gris clair par défaut
+        return COLOR_MAP.get(color_clean, (200, 200, 200))
 
     def _parse_options(self, options_str: str) -> Dict[str, Any] | None:
         options: Dict[str, Any] = {}
@@ -27,6 +52,9 @@ class ConfigParser:
                 continue
             if value.isdigit():
                 options[key] = int(value)
+            if key == "color":
+                print(value)
+                options[key] = self._parse_color(str(value))
             else:
                 options[key] = value
         return options
@@ -50,7 +78,7 @@ class ConfigParser:
                                              "'nb_drones:' as the first line.")
 
                 options_match: Match[str] | None = re.search(r"\[(.*?)\]",
-                                                              line)
+                                                             line)
                 options_dict = {}
                 if options_match:
                     options_dict = self._parse_options(
@@ -65,6 +93,8 @@ class ConfigParser:
                         start_count += 1
                     elif prefix == "end_hub":
                         end_count += 1
+                        self.goal_zone = parts[0]
+                        print(parts[0])
                     if start_count > 1 or end_count > 1:
                         raise MapParserError(f"Line {line_id}: start "
                                              "ou end hub: multiple times")

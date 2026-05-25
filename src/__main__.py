@@ -6,13 +6,12 @@ from typing import Dict, List
 
 def main() -> None:
     choice: int = int(input("What level you to do (0: easy, 1: "
-                            "medium, 2: hard) -> "))
-    if choice != 1 and choice != 2 and choice != 0:
-        choice = 0
+                            "medium, 2: hard, 3: challenge) -> "))
     files: List[str] = [
         "maps/easy/01_linear_path.txt",
         "maps/medium/01_dead_end_trap.txt",
-        "maps/hard/01_maze_nightmare.txt"
+        "maps/hard/01_maze_nightmare.txt",
+        "maps/challenger/01_the_impossible_dream.txt"
         ]
     file_path: str = files[choice]
     try:

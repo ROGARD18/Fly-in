@@ -22,7 +22,7 @@ class Simulation:
 
         for i in range(nb_drones):
             try:
-                drone: DroneModel = DroneModel(id=i)
+                drone: DroneModel = DroneModel(id=i + 1)
             except DroneError as e:
                 raise DroneError(f"Error initializing drone {i}: {e}")
             drones.append(drone)
@@ -37,8 +37,9 @@ class Simulation:
             neighbors[z1].append(z2)
             neighbors[z2].append(z1)
 
-        queue: List[Tuple[int, str]] = [(0, "goal")]
-        best_distances: Dict[str, int] = {"goal": 0}
+        print(self.map.goal_zone)
+        queue: List[Tuple[int, str]] = [(0, self.map.goal_zone)]
+        best_distances: Dict[str, int] = {self.map.goal_zone: 0}
 
         while queue:
             cur_dist, zone = heapq.heappop(queue)
