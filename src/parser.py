@@ -34,10 +34,8 @@ class ConfigParser:
         self.goal_zone: str
 
     def _parse_color(self, color_str: str) -> tuple[int, int, int]:
-        """Convertit une chaîne de caractères en tuple RGB."""
         color_clean = color_str.lower().strip()
 
-        # Retourne la couleur si elle existe, sinon un gris clair par défaut
         return COLOR_MAP.get(color_clean, (200, 200, 200))
 
     def _parse_options(self, options_str: str) -> Dict[str, Any] | None:
@@ -77,12 +75,11 @@ class ConfigParser:
                         raise MapParserError(f"Line {line_id}: Expected "
                                              "'nb_drones:' as the first line.")
 
-                options_match: Match[str] | None = re.search(r"\[(.*?)\]",
-                                                             line)
                 options_dict = {}
+                options_match = re.search(r"\[(.*?)\]", line)
+
                 if options_match:
-                    options_dict = self._parse_options(
-                        options_match.group(0))
+                    options_dict = self._parse_options(options_match.group(1))
                     line = re.sub(r"\[.*?\]", "", line).strip()
 
                 if line.startswith(("start_hub", "end_hub", "hub")):
@@ -95,16 +92,21 @@ class ConfigParser:
                         end_count += 1
                         self.goal_zone = parts[0]
                         print(parts[0])
+
                     if start_count > 1 or end_count > 1:
-                        raise MapParserError(f"Line {line_id}: start "
-                                             "ou end hub: multiple times")
+                        raise MapParserError(
+                            f"Line {line_id}: start ou end hub: multiple times")
                     if len(parts) < 3:
-                        raise MapParserError(f"Line {line_id}: Invalid zone "
-                                             "definition.")
+                        raise MapParserError(
+                            f"Line {line_id}: Invalid zone definition.")
+
                     name, x, y = parts[0], int(parts[1]), int(parts[2])
 
-                    if prefix == "start_hub" or prefix == "end_hub":
+                    if prefix in ("start_hub", "end_hub"):
                         options_dict["zone"] = "normal"
+
+                    if "max_drones" not in options_dict:
+                        options_dict["max_drones"] = self.nb_drones
 
                     try:
                         zone = ZoneModel(name=name, x=x, y=y, **options_dict)
@@ -115,18 +117,18 @@ class ConfigParser:
                 elif line.startswith("connection:"):
                     _, rest = line.split(":", 1)
                     if '-' not in rest:
-                        raise MapParserError(f"Line {line_id}: Invalid"
-                                             " connection definition.")
+                        raise MapParserError(
+                            f"Line {line_id}: Invalid connection definition.")
 
                     zones_parts = rest.strip().split('-')
                     z1, z2 = zones_parts[0].strip(), zones_parts[1].strip()
 
                     if z1 not in self.zones or z2 not in self.zones:
-                        raise MapParserError(f"Line {line_id}: Connection"
-                                             " refers to undefined zones.")
+                        raise MapParserError(
+                            f"Line {line_id}: Connection refers to undefined zones.")
                     try:
-                        connection = ConnectionModel(zone1=z1, zone2=z2,
-                                                     **options_dict)
+                        connection = ConnectionModel(
+                            zone1=z1, zone2=z2, **options_dict)
                         self.connections.append(connection)
                     except Exception as e:
                         raise MapParserError(f"Line {line_id}: {str(e)}")

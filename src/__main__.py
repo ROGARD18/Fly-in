@@ -19,9 +19,8 @@ def main() -> None:
     except Exception as e:
         print(e)
         return
-    # print(type(map_config))
     simu: Simulation = Simulation(map=map_config)
-    print()
+    simu.resolve_all_paths
 
     from src.visualizer import Visualizer
     visu: Visualizer = Visualizer(simu=simu)

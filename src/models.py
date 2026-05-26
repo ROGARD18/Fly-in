@@ -3,13 +3,14 @@ from pydantic import BaseModel, Field
 
 ZoneType = Literal["normal", "blocked", "restricted", "priority"]
 StepType = Tuple[str, int]
+Path = List[Tuple[str, int]]
 
 
 class DroneError(Exception):
     pass
 
 
-class ZoneModel(BaseModel):
+class ZoneModel(BaseModel   ):
     model_config = {
         "populate_by_name": True
     }
