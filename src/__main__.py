@@ -5,12 +5,15 @@ from typing import Dict, List
 
 
 def main() -> None:
-    choice: int = int(input("What level you to do (0: easy, 1: "
-                            "medium, 2: hard, 3: challenge) -> "))
+    try:
+        choice: int = int(input("What level you to do (0: easy, 1: "
+                                "medium, 2: hard, 3: challenge) -> "))
+    except Exception as e:
+        print(f"Error !: Input have to be an int")
     files: List[str] = [
         "maps/easy/01_linear_path.txt",
         "maps/medium/01_dead_end_trap.txt",
-        "maps/hard/01_maze_nightmare.txt",
+        "maps/hard/03_ultimate_challenge.txt",
         "maps/challenger/01_the_impossible_dream.txt"
         ]
     file_path: str = files[choice]

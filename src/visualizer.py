@@ -1,24 +1,20 @@
+from src.simulation import Simulation
+import pygame
 import sys
 import math
 import os
-from src.simulation import Simulation
+
+# Suppression du message de bienvenue Pygame avant l'import
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-import pygame
 
 
 class Visualizer:
     def __init__(self, simu: Simulation) -> None:
-        try:
-            os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-            import pygame
-        except Exception as e:
-            raise (e)
         self.simu = simu
 
         pygame.init()
-        print()
-        self.font = pygame.font.Font(None, 14)
 
+        self.font = pygame.font.Font(None, 23)
         self.capacity_font = pygame.font.Font(None, 11)
 
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -31,8 +27,16 @@ class Visualizer:
 
         self.LINE_COLOR = (240, 240, 240)
         self.BORDER_NORMAL = (250, 200, 255)
-
         self.SKY_COLOR = (135, 206, 235)
+
+        # Variables de Caméra et Contrôles
+        self.zoom_level = 1.0
+        self.camera_pan = [0.0, 0.0]
+        self.dragging = False
+        self.last_mouse = (0, 0)
+
+        self.paused = False
+        self.step_delay = 1000
 
     def _load_weather_assets(self) -> None:
         asset_path = "assets"
@@ -61,8 +65,7 @@ class Visualizer:
             self.assets_loaded = True
 
         except pygame.error as e:
-            print(
-                f"Asset Error: {e}.")
+            print(f"Asset Error: {e}.")
             self.assets_loaded = False
 
     def draw_star(self, surface, color, center_pos, outer_radius, inner_radius, points=5):
@@ -102,16 +105,16 @@ class Visualizer:
         scale_x = (self.width - 2 * margin_x) / (map_w + 1.5)
         scale_y = (self.height - 2 * margin_y) / (map_h + 1.5)
 
-        base_scale = min(scale_x, scale_y)
-        MAX_SCALE = min(self.width, self.height) * 0.15
+        base_scale = min(scale_x, scale_y) * self.zoom_level
+        MAX_SCALE = min(self.width, self.height) * 0.15 * self.zoom_level
         base_scale = min(base_scale, MAX_SCALE)
 
         node_h = int(base_scale * 0.8)
         node_w = int(base_scale * 0.8)
 
-        offset_x = margin_x - (min_x * base_scale)
-        offset_y = (self.height - (map_h * base_scale)) / \
-            2 - (min_y * base_scale)
+        offset_x = margin_x - (min_x * base_scale) + self.camera_pan[0]
+        offset_y = (self.height - (map_h * base_scale)) / 2 - \
+            (min_y * base_scale) + self.camera_pan[1]
 
         drone_radius = int(node_w * 0.15)
         current_turn = getattr(self, "current_turn", 0)
@@ -254,7 +257,6 @@ class Visualizer:
             self.screen.blit(text, text.get_rect(
                 center=(int(anim_x), int(anim_y))))
 
-        # --- CALQUE 4 : SYMBOLE + ET INFOBULLES ---
         for z_name, (hx, hy, hidden_list) in hidden_now.items():
             pygame.draw.circle(self.screen, (255, 215, 0),
                                (int(hx), int(hy)), drone_radius)
@@ -280,6 +282,23 @@ class Visualizer:
             pygame.draw.rect(self.screen, (255, 215, 0), box_rect, 1)
             self.screen.blit(text_surf, (box_rect.x + 5, box_rect.y + 5))
 
+        hud_lines = [
+            f"Tour : {current_turn}",
+            f"Vitesse : {self.step_delay}ms",
+            "STATUT : PAUSE" if self.paused else "STATUT : EN COURS",
+            "",
+            "[Clic Gauche] Déplacer la carte",
+            "[Molette] Zoomer",
+            "[Espace] Pause / Reprendre",
+            "[Flèche Haut/Bas] Changer Vitesse",
+            "[ R ] Restart"
+        ]
+
+        for i, line in enumerate(hud_lines):
+            color = (255, 100, 100) if "PAUSE" in line else (255, 255, 255)
+            text_surf = self.font.render(line, True, color)
+            self.screen.blit(text_surf, (15, 15 + (i * 20)))
+
     def run(self) -> None:
         self.simu.resolve_all_paths()
         self.current_turn = 0
@@ -288,28 +307,59 @@ class Visualizer:
         running = True
 
         last_step_time = pygame.time.get_ticks()
-        step_delay = 1000
+        paused_time_offset = 0
 
         while running:
+            current_time = pygame.time.get_ticks()
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         running = False
+                    elif event.key == pygame.K_SPACE:
+                        self.paused = not self.paused
+                        if not self.paused:
+                            last_step_time = current_time - paused_time_offset
+                    elif event.key == pygame.K_r:
+                        self.current_turn = 0
+                        last_step_time = current_time
+                        paused_time_offset = 0
+                    elif event.key == pygame.K_UP:
+                        self.step_delay = max(100, self.step_delay - 200)
+                    elif event.key == pygame.K_DOWN:
+                        self.step_delay = min(3000, self.step_delay + 200)
 
-            current_time = pygame.time.get_ticks()
-            elapsed = current_time - last_step_time
+                elif event.type == pygame.MOUSEWHEEL:
+                    self.zoom_level += event.y * 0.1
+                    self.zoom_level = max(0.2, min(self.zoom_level, 5.0))
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        self.dragging = True
+                        self.last_mouse = event.pos
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:
+                        self.dragging = False
+                elif event.type == pygame.MOUSEMOTION:
+                    if self.dragging:
+                        dx = event.pos[0] - self.last_mouse[0]
+                        dy = event.pos[1] - self.last_mouse[1]
+                        self.camera_pan[0] += dx
+                        self.camera_pan[1] += dy
+                        self.last_mouse = event.pos
 
-            if elapsed >= step_delay:
-                self.current_turn += 1
-                last_step_time = current_time
-                elapsed = 0
+            if not self.paused:
+                elapsed = current_time - last_step_time
+                if elapsed >= self.step_delay:
+                    self.current_turn += 1
+                    last_step_time = current_time
+                    elapsed = 0
+                progress = elapsed / self.step_delay
+                paused_time_offset = elapsed
+            else:
+                progress = paused_time_offset / self.step_delay
 
-            # Calcul du pourcentage de déplacement en temps réel (0.0 à 1.0)
-            progress = elapsed / step_delay
-
-            # On passe la progression à la méthode de dessin
             self.draw_map(progress)
             pygame.display.flip()
 
