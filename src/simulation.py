@@ -2,6 +2,7 @@ from typing import List, Tuple, Dict
 from src.parser import ConfigParser
 from src.models import ZoneModel, ConnectionModel, DroneModel, StepType, Path
 from src.models import DroneError
+from pathlib import Path
 import heapq
 
 
@@ -123,7 +124,6 @@ class Simulation:
                     f_score = new_g + zone_model.distance
                     heapq.heappush(
                         queue, (f_score, new_g, next_zone, new_turn))
-        print("ici")
         return []
 
     def resolve_all_paths(self) -> None:

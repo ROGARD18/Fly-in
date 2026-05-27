@@ -4,7 +4,6 @@ import sys
 import math
 import os
 
-# Suppression du message de bienvenue Pygame avant l'import
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 
@@ -29,7 +28,6 @@ class Visualizer:
         self.BORDER_NORMAL = (250, 200, 255)
         self.SKY_COLOR = (135, 206, 235)
 
-        # Variables de Caméra et Contrôles
         self.zoom_level = 1.0
         self.camera_pan = [0.0, 0.0]
         self.dragging = False
@@ -367,3 +365,138 @@ class Visualizer:
 
         pygame.quit()
         sys.exit()
+
+    @staticmethod
+    def run_menu(all_maps: list) -> str:
+        for map in all_maps:
+            print(len(map))
+        print()
+        map_names = [map.split('/')[-1] for map, _ in all_maps]
+        index: int = 0
+        for map in all_maps:
+            print(map)
+            map = map_names[index]
+        pygame.init()
+        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        width, height = screen.get_size()
+        pygame.display.set_caption("Terminal Drone - Sélection")
+
+        pygame.font.init()
+        # Polices dynamiques basées sur la hauteur de l'écran
+        font_title = pygame.font.SysFont("trebuchetms", int(height * 0.05), bold=True)
+        font_diff = pygame.font.SysFont("trebuchetms", int(height * 0.04), bold=True)
+        font_item = pygame.font.SysFont("segoeui", int(height * 0.035), bold=True)
+
+        BG_COLOR = (15, 15, 20)
+        GRID_COLOR = (25, 25, 32)
+        CARD_COLOR = (35, 35, 45)
+        TEXT_MAIN = (250, 250, 250)
+        ACCENT = (0, 255, 170)
+
+        grouped_maps = {}
+        for map_name, difficulty in all_maps:
+            if difficulty not in grouped_maps:
+                grouped_maps[difficulty] = []
+            grouped_maps[difficulty].append(map_name)
+
+        clock = pygame.time.Clock()
+        selected_map = None
+        bg_offset = 0.0
+        
+        # Dictionnaire pour stocker l'état d'animation de chaque bouton (0.0 à 1.0)
+        anim_states = {name: 0.0 for _, maps in grouped_maps.items() for name in maps}
+
+        while selected_map is None:
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_clicked = False
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_clicked = True
+
+            screen.fill(BG_COLOR)
+            bg_offset = (bg_offset + 0.3) % 50
+            for x in range(0, width, 50):
+                pygame.draw.line(screen, GRID_COLOR, (x, 0), (x, height))
+            for y in range(int(bg_offset) - 50, height, 50):
+                pygame.draw.line(screen, GRID_COLOR, (0, y), (width, y))
+
+            title_surf = font_title.render("SÉLECTION DE L'ESPACE AÉRIEN", True, TEXT_MAIN)
+            title_rect = title_surf.get_rect(center=(width // 2, height * 0.10))
+            screen.blit(title_surf, title_rect)
+            pygame.draw.line(screen, ACCENT, (width//2 - 200, title_rect.bottom + 10), (width//2 + 200, title_rect.bottom + 10), 4)
+
+            num_cols = len(grouped_maps)
+            if num_cols == 0:
+                return ""
+            
+            col_width = width // num_cols
+            start_y = height * 0.25
+
+            for i, (difficulty, maps) in enumerate(grouped_maps.items()):
+                x_center = (i * col_width) + (col_width // 2)
+
+                diff_surf = font_diff.render(difficulty.upper(), True, ACCENT)
+                screen.blit(diff_surf, diff_surf.get_rect(center=(x_center, start_y)))
+
+                for j, map_name in enumerate(maps):
+                    # Proportions très larges
+                    base_card_width = col_width * 0.85
+                    base_card_height = height * 0.12 
+                    y_pos = start_y + (height * 0.10) + (j * (base_card_height + height * 0.03))
+                    
+                    hitbox_rect = pygame.Rect(0, 0, base_card_width, base_card_height)
+                    hitbox_rect.center = (x_center, y_pos)
+                    
+                    is_hovered = hitbox_rect.collidepoint(mouse_pos)
+                    
+                    # Logique mathématique de l'animation (Lerp)
+                    target = 1.0 if is_hovered else 0.0
+                    anim_states[map_name] += (target - anim_states[map_name]) * 0.15
+                    progress = anim_states[map_name]
+                    
+                    anim_width = base_card_width + (progress * 30)
+                    anim_height = base_card_height + (progress * 15)
+                    
+                    card_rect = pygame.Rect(0, 0, anim_width, anim_height)
+                    card_rect.center = (x_center, y_pos)
+                    
+                    shadow_rect = card_rect.copy()
+                    shadow_rect.y += 4 + (progress * 8) 
+                    
+                    pygame.draw.rect(screen, (8, 8, 12), shadow_rect, border_radius=15)
+                    
+                    # Interpolation des couleurs
+                    r = int(CARD_COLOR[0] + (ACCENT[0] - CARD_COLOR[0]) * progress * 0.2)
+                    g = int(CARD_COLOR[1] + (ACCENT[1] - CARD_COLOR[1]) * progress * 0.2)
+                    b = int(CARD_COLOR[2] + (ACCENT[2] - CARD_COLOR[2]) * progress * 0.2)
+                    
+                    pygame.draw.rect(screen, (r, g, b), card_rect, border_radius=15)
+                    pygame.draw.rect(screen, ACCENT, card_rect, width=max(1, int(progress * 4)), border_radius=15)
+                    
+                    item_surf = font_item.render(map_name, True, TEXT_MAIN)
+                    
+                    # Agrandissement du texte au survol
+                    if progress > 0.01:
+                        scale_factor = 1 + (progress * 0.1)
+                        scaled_surf = pygame.transform.smoothscale(
+                            item_surf, 
+                            (int(item_surf.get_width() * scale_factor), int(item_surf.get_height() * scale_factor))
+                        )
+                        screen.blit(scaled_surf, scaled_surf.get_rect(center=card_rect.center))
+                    else:
+                        screen.blit(item_surf, item_surf.get_rect(center=card_rect.center))
+
+                    if is_hovered and mouse_clicked:
+                        selected_map = map_name
+
+            pygame.display.flip()
+            clock.tick(60)
+
+        return selected_map

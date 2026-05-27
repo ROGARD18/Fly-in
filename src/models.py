@@ -19,7 +19,7 @@ class ZoneModel(BaseModel):
     y: int = Field(frozen=True)
     zone_type: ZoneType = Field(default="normal", alias="zone", frozen=True)
     color: Optional[tuple[int, int, int]] = Field(default=None, frozen=True)
-    max_drones: int = Field(default=1, ge=1, frozen=True) 
+    max_drones: int = Field(default=1, ge=1, frozen=True)
     distance: int = Field(default=0, ge=0)
 
 

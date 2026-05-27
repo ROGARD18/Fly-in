@@ -2,30 +2,24 @@ from src.models import ZoneModel, ConnectionModel
 from src.parser import ConfigParser, MapParserError
 from src.simulation import Simulation
 from typing import Dict, List
+from src.init_maps import init_maps
+from src.visualizer import Visualizer
 
 
 def main() -> None:
+    all_maps: List[str] = init_maps()
+    # try:  
+    choice: str = Visualizer.run_menu(all_maps)
+    # except Exception as e:
+    #     print(f"Error !: {e}")
     try:
-        choice: int = int(input("What level you to do (0: easy, 1: "
-                                "medium, 2: hard, 3: challenge) -> "))
-    except Exception as e:
-        print(f"Error !: Input have to be an int")
-    files: List[str] = [
-        "maps/easy/01_linear_path.txt",
-        "maps/medium/01_dead_end_trap.txt",
-        "maps/hard/03_ultimate_challenge.txt",
-        "maps/challenger/01_the_impossible_dream.txt"
-        ]
-    file_path: str = files[choice]
-    try:
-        map_config: ConfigParser = ConfigParser(file_path=file_path)
+        map_config: ConfigParser = ConfigParser(file_path=choice)
     except Exception as e:
         print(e)
         return
     simu: Simulation = Simulation(map=map_config)
     simu.resolve_all_paths
 
-    from src.visualizer import Visualizer
     visu: Visualizer = Visualizer(simu=simu)
     visu.run()
 
