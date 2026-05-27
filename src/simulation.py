@@ -5,6 +5,10 @@ from src.models import DroneError
 import heapq
 
 
+class SolvePathError(Exception):
+    pass
+
+
 class Simulation:
     def __init__(self, map: ConfigParser):
         self.map: ConfigParser = map
@@ -22,7 +26,8 @@ class Simulation:
 
         for i in range(nb_drones):
             try:
-                drone: DroneModel = DroneModel(id=i + 1)
+                drone: DroneModel = DroneModel(
+                    id=i + 1, start_zone_name=self.map.start_zone)
             except DroneError as e:
                 raise DroneError(f"Error initializing drone {i}: {e}")
             drones.append(drone)
@@ -31,7 +36,6 @@ class Simulation:
     def determine_distance_to_goal(self) -> None:
         """Dijkstra algorythm to determine the distance of
         each zone to the goal zone"""
-        # print(self.map.goal_zone)
 
         queue: List[Tuple[int, str]] = [(0, self.map.goal_zone)]
         best_distances: Dict[str, int] = {self.map.goal_zone: 0}
@@ -67,11 +71,12 @@ class Simulation:
         return path
 
     def a_star(self) -> List[Tuple[str, int]]:
-        start_h = self.map.zones["start"].distance
-        queue = [(start_h, 0, "start", 0)]
+        start_name: str = self.map.start_zone
+        start_h = self.map.zones[start_name].distance
+        queue = [(start_h, 0, start_name, 0)]
 
         visited: Dict[Tuple[str, int], Tuple[str, int]] = {}
-        g_scores: Dict[Tuple[str, int], int] = {("start", 0): 0}
+        g_scores: Dict[Tuple[str, int], int] = {(start_name, 0): 0}
 
         while queue:
             f, g, cur_zone, cur_turn = heapq.heappop(queue)
@@ -81,14 +86,19 @@ class Simulation:
                                               (cur_zone, cur_turn))
 
             options = self.neighbors[cur_zone] + [cur_zone]
-
+            if not options:
+                raise SolvePathError("It's impossible to go from start"
+                                     " zone to goal zone (missing links)")
+            if all(getattr(self.map.zones[zone], "zone_type", "normal") == "blocked"
+                   for zone in self.neighbors[cur_zone]):
+                raise SolvePathError("It's impossible to go from start"
+                                     " zone to goal zone (blocked zones)")
             for next_zone in options:
                 zone_model = self.map.zones[next_zone]
                 zone_type = getattr(zone_model, "zone_type", "normal")
 
                 if zone_type == "blocked":
                     continue
-
                 if next_zone == cur_zone:
                     cost = 1
                 else:
@@ -113,8 +123,26 @@ class Simulation:
                     f_score = new_g + zone_model.distance
                     heapq.heappush(
                         queue, (f_score, new_g, next_zone, new_turn))
-
+        print("ici")
         return []
+
+    def resolve_all_paths(self) -> None:
+        path: List[Tuple[str, int]] = []
+        for drone in self.drones:
+            try:
+                path = self.a_star()
+            except SolvePathError as e:
+                print(f"Error ! : {e}")
+                return
+            if path:
+                drone.path = path
+                for step in path:
+                    self.bookings[step] = self.bookings.get(step, 0) + 1
+            else:
+                print(
+                    f"[-] Aucun chemin possible trouvé pour"
+                    " le drone {drone.id}")
+        self.print_simulation_output()
 
     def print_simulation_output(self) -> None:
         schedules = {}
@@ -143,25 +171,9 @@ class Simulation:
                 elif not zone_now and zone_prev:
                     target_zone = sched.get(move + 1)
                     if target_zone:
-                        line_moves.append(f"D{drone.id}-conn_to_{target_zone}")
+                        line_moves.append(f"D{drone.id}-{target_zone}")
 
             if line_moves:
                 print(" ".join(line_moves))
             lap = move
         print("Nombre de lap =", lap)
-
-
-    def resolve_all_paths(self) -> None:
-
-        for drone in self.drones:
-            path = self.a_star()
-
-            if path:
-                drone.path = path
-                for step in path:
-                    self.bookings[step] = self.bookings.get(step, 0) + 1
-            else:
-                print(
-                    f"[-] Aucun chemin possible trouvé pour"
-                    " le drone {drone.id}")
-        self.print_simulation_output()

@@ -9,11 +9,11 @@ nb_drones: 25
 start_hub: start 0 0 [color=green max_drones=25]
 
 # Single-file entry gates (extreme bottleneck)
-hub: gate_hell1 2 0 [color=red max_drones=20]
-hub: gate_hell2 3 0 [color=red max_drones=20]
-hub: gate_hell3 4 0 [color=red max_drones=20]
-hub: gate_hell4 5 0 [color=red max_drones=20]
-hub: gate_hell5 6 0 [color=red max_drones=20]
+hub: gate_hell1 2 0 [color=red max_drones=1]
+hub: gate_hell2 3 0 [color=red max_drones=1]
+hub: gate_hell3 4 0 [color=red max_drones=1]
+hub: gate_hell4 5 0 [color=red max_drones=1]
+hub: gate_hell5 6 0 [color=red max_drones=1]
 
 # === LAYER 1: The Maze of Despair ===
 # Multiple interconnected dead ends and loops
@@ -27,21 +27,21 @@ hub: maze_trap_b2 3 -1 [color=purple]
 hub: maze_trap_b3 4 -1 [color=purple]
 hub: maze_dead_b 5 -1 [color=black]
 
-hub: maze_loop1 2 2 [color=brown]
-hub: maze_loop2 3 2 [zone=blocked color=brown]
-hub: maze_loop3 4 2 [zone=blocked color=brown]
-hub: maze_loop4 5 2 [zone=blocked color=brown]
+hub: maze_loop1 2 2 [zone=restricted color=brown]
+hub: maze_loop2 3 2 [zone=restricted color=brown]
+hub: maze_loop3 4 2 [zone=restricted color=brown]
+hub: maze_loop4 5 2 [zone=restricted color=brown]
 hub: maze_loop5 6 2 [zone=restricted color=brown]
 hub: maze_loop6 6 1 [zone=restricted color=brown]
 
 # === LAYER 2: The Capacity Nightmare ===
-hub: micro_gate1 7 0 [zone=restricted color=orange max_drones=1]
-hub: micro_gate2 8 0 [zone=restricted color=orange max_drones=3]
-hub: micro_gate3 9 0 [zone=restricted color=orange max_drones=1]
+hub: micro_gate1 7 0 [color=orange max_drones=1]
+hub: micro_gate2 8 0 [color=orange max_drones=1]
+hub: micro_gate3 9 0 [color=orange max_drones=1]
 
 # Overflow areas with terrible costs
 hub: overflow_hell1 7 1 [zone=restricted color=maroon max_drones=2]
-hub: overflow_hell2 8 1 [color=maroon max_drones=2]
+hub: overflow_hell2 8 1 [zone=restricted color=maroon max_drones=2]
 hub: overflow_hell3 9 1 [zone=restricted color=maroon max_drones=2]
 hub: overflow_hell4 7 -1 [zone=restricted color=maroon max_drones=2]
 hub: overflow_hell5 8 -1 [zone=restricted color=maroon max_drones=2]
@@ -91,6 +91,7 @@ end_hub: impossible_goal 23 0 [color=rainbow max_drones=25]
 
 # Layer 0 connections (bottleneck hell)
 connection: start-gate_hell1 [max_link_capacity=1]
+connection: start-impossible_goal [max_link_capacity=1]
 connection: gate_hell1-gate_hell2 [max_link_capacity=1]
 connection: gate_hell2-gate_hell3 [max_link_capacity=1]
 connection: gate_hell3-gate_hell4 [max_link_capacity=1]

@@ -10,7 +10,7 @@ class DroneError(Exception):
     pass
 
 
-class ZoneModel(BaseModel   ):
+class ZoneModel(BaseModel):
     model_config = {
         "populate_by_name": True
     }
@@ -34,6 +34,6 @@ class ConnectionModel(BaseModel):
 
 
 class DroneModel():
-    def __init__(self, id: int):
+    def __init__(self, id: int, start_zone_name: str):
         self.id: int = id
-        self.path: List[StepType] = [("start", 0)]
+        self.path: List[StepType] = [(start_zone_name, 0)]

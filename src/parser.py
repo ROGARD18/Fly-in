@@ -32,6 +32,7 @@ class ConfigParser:
         self.connections: List[ConnectionModel] = []
         self.parse()
         self.goal_zone: str
+        self.start_zone: str
 
     def _parse_color(self, color_str: str) -> tuple[int, int, int]:
         color_clean = color_str.lower().strip()
@@ -51,7 +52,6 @@ class ConfigParser:
             if value.isdigit():
                 options[key] = int(value)
             if key == "color":
-                print(value)
                 options[key] = self._parse_color(str(value))
             else:
                 options[key] = value
@@ -88,10 +88,10 @@ class ConfigParser:
 
                     if prefix == "start_hub":
                         start_count += 1
+                        self.start_zone = parts[0]
                     elif prefix == "end_hub":
                         end_count += 1
                         self.goal_zone = parts[0]
-                        print(parts[0])
 
                     if start_count > 1 or end_count > 1:
                         raise MapParserError(

@@ -1,15 +1,22 @@
-import pygame
 import sys
 import math
 import os
 from src.simulation import Simulation
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import pygame
 
 
 class Visualizer:
     def __init__(self, simu: Simulation) -> None:
+        try:
+            os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+            import pygame
+        except Exception as e:
+            raise (e)
         self.simu = simu
 
         pygame.init()
+        print()
         self.font = pygame.font.Font(None, 14)
 
         self.capacity_font = pygame.font.Font(None, 11)
@@ -52,11 +59,10 @@ class Visualizer:
             self.textures["cloud_storm"] = storm_img
 
             self.assets_loaded = True
-            print("[+] Textures BMP météo chargées avec succès (avec Couleur Clé).")
 
         except pygame.error as e:
             print(
-                f"[-] Erreur de chargement d'asset : {e}. Rendu simplifié activé.")
+                f"Asset Error: {e}.")
             self.assets_loaded = False
 
     def draw_star(self, surface, color, center_pos, outer_radius, inner_radius, points=5):
@@ -104,7 +110,8 @@ class Visualizer:
         node_w = int(base_scale * 0.8)
 
         offset_x = margin_x - (min_x * base_scale)
-        offset_y = (self.height - (map_h * base_scale)) / 2 - (min_y * base_scale)
+        offset_y = (self.height - (map_h * base_scale)) / \
+            2 - (min_y * base_scale)
 
         drone_radius = int(node_w * 0.15)
         current_turn = getattr(self, "current_turn", 0)
@@ -112,21 +119,23 @@ class Visualizer:
         def get_turn_data(turn):
             d_by_z = {}
             for d in self.simu.drones:
-                if not d.path: continue
+                if not d.path:
+                    continue
                 idx = min(turn, len(d.path) - 1)
                 z = d.path[idx][0]
-                if z not in d_by_z: d_by_z[z] = []
+                if z not in d_by_z:
+                    d_by_z[z] = []
                 d_by_z[z].append(d.id)
-                
+
             coords = {}
             hidden_plus = {}
-            
+
             for z_name, d_list in d_by_z.items():
                 z_obj = self.simu.map.zones[z_name]
                 cx = int(z_obj.x * base_scale + offset_x)
                 cy = int(z_obj.y * base_scale + offset_y)
                 start_y = cy + (node_h // 2) - drone_radius - 5
-                
+
                 for i, d_id in enumerate(d_list):
                     if i < 5 or (i == 5 and len(d_list) <= 6):
                         row = i // 2
@@ -141,7 +150,7 @@ class Visualizer:
                         dy = start_y - (row * (drone_radius * 2 + 2))
                         coords[d_id] = (dx, dy, False)
                         hidden_plus[z_name] = (dx, dy, d_list[5:])
-                        
+
             return coords, hidden_plus, d_by_z
 
         coords_now, hidden_now, drones_by_zone = get_turn_data(current_turn)
@@ -169,16 +178,22 @@ class Visualizer:
 
             pygame.draw.rect(self.screen, self.SKY_COLOR, zone_rect)
 
-            border_color = zone.color if hasattr(zone, "color") and zone.color else self.BORDER_NORMAL
+            border_color = zone.color if hasattr(
+                zone, "color") and zone.color else self.BORDER_NORMAL
             blit_texture = None
 
             if zone_type == "blocked":
-                if self.assets_loaded: blit_texture = self.textures["cloud_storm"]
-                else: pygame.draw.rect(self.screen, border_color, zone_rect)
+                if self.assets_loaded:
+                    blit_texture = self.textures["cloud_storm"]
+                else:
+                    pygame.draw.rect(self.screen, border_color, zone_rect)
             elif zone_type == "restricted":
-                if self.assets_loaded: blit_texture = self.textures["cloud_slow"]
-                else: pygame.draw.rect(self.screen, (160, 160, 170), zone_rect)
-                border_color = zone.color if hasattr(zone, "color") and zone.color else self.BORDER_NORMAL
+                if self.assets_loaded:
+                    blit_texture = self.textures["cloud_slow"]
+                else:
+                    pygame.draw.rect(self.screen, (160, 160, 170), zone_rect)
+                border_color = zone.color if hasattr(
+                    zone, "color") and zone.color else self.BORDER_NORMAL
 
             if blit_texture:
                 tex_surface = pygame.Surface((node_w, node_h))
@@ -190,7 +205,7 @@ class Visualizer:
                 self.screen.blit(tex_surface, zone_rect.topleft)
 
             pygame.draw.rect(self.screen, border_color, zone_rect, 2)
-            
+
             current_count = len(drones_by_zone.get(name, []))
             max_capacity = getattr(zone, "max_drones", 0)
             cap_text = f"{current_count}/{max_capacity}"
@@ -202,21 +217,27 @@ class Visualizer:
             if zone_type == "priority":
                 outer_r = min(node_w, node_h) * 0.30
                 inner_r = outer_r * 0.45
-                self.draw_star(self.screen, (255, 215, 0), pos, outer_r, inner_r, 5)
-                
+                self.draw_star(self.screen, (255, 215, 0),
+                               pos, outer_r, inner_r, 5)
+
             if name.lower() == "start":
-                pygame.draw.circle(self.screen, (0, 255, 120), pos, int(node_w/4))
-                pygame.draw.circle(self.screen, (255, 255, 255), pos, int(node_w/4), 2)
+                pygame.draw.circle(
+                    self.screen, (0, 255, 120), pos, int(node_w/4))
+                pygame.draw.circle(
+                    self.screen, (255, 255, 255), pos, int(node_w/4), 2)
             elif name.lower() in ["end", "goal"]:
-                pygame.draw.circle(self.screen, (255, 50, 80), pos, int(node_w/4))
-                pygame.draw.circle(self.screen, (255, 255, 255), pos, int(node_w/4), 2)
+                pygame.draw.circle(
+                    self.screen, (255, 50, 80), pos, int(node_w/4))
+                pygame.draw.circle(
+                    self.screen, (255, 255, 255), pos, int(node_w/4), 2)
 
         for drone in self.simu.drones:
             if drone.id not in coords_now:
                 continue
 
             x_now, y_now, vis_now = coords_now[drone.id]
-            x_next, y_next, vis_next = coords_next.get(drone.id, coords_now[drone.id])
+            x_next, y_next, vis_next = coords_next.get(
+                drone.id, coords_now[drone.id])
 
             anim_x = x_now + (x_next - x_now) * progress
             anim_y = y_now + (y_next - y_now) * progress
@@ -224,17 +245,22 @@ class Visualizer:
             if not vis_now and not vis_next and progress < 0.9:
                 continue
 
-            pygame.draw.circle(self.screen, (255, 50, 80), (int(anim_x), int(anim_y)), drone_radius)
-            pygame.draw.circle(self.screen, (255, 255, 255), (int(anim_x), int(anim_y)), drone_radius, 1)
+            pygame.draw.circle(self.screen, (255, 50, 80),
+                               (int(anim_x), int(anim_y)), drone_radius)
+            pygame.draw.circle(self.screen, (255, 255, 255),
+                               (int(anim_x), int(anim_y)), drone_radius, 1)
 
             text = self.font.render(str(drone.id), True, (255, 255, 255))
-            self.screen.blit(text, text.get_rect(center=(int(anim_x), int(anim_y))))
+            self.screen.blit(text, text.get_rect(
+                center=(int(anim_x), int(anim_y))))
 
         # --- CALQUE 4 : SYMBOLE + ET INFOBULLES ---
         for z_name, (hx, hy, hidden_list) in hidden_now.items():
-            pygame.draw.circle(self.screen, (255, 215, 0), (int(hx), int(hy)), drone_radius)
-            pygame.draw.circle(self.screen, (0, 0, 0), (int(hx), int(hy)), drone_radius, 1)
-            
+            pygame.draw.circle(self.screen, (255, 215, 0),
+                               (int(hx), int(hy)), drone_radius)
+            pygame.draw.circle(self.screen, (0, 0, 0),
+                               (int(hx), int(hy)), drone_radius, 1)
+
             text = self.font.render("+", True, (0, 0, 0))
             self.screen.blit(text, text.get_rect(center=(int(hx), int(hy))))
 
@@ -256,11 +282,11 @@ class Visualizer:
 
     def run(self) -> None:
         self.simu.resolve_all_paths()
-        self.current_turn = 0 
+        self.current_turn = 0
 
         clock = pygame.time.Clock()
         running = True
-        
+
         last_step_time = pygame.time.get_ticks()
         step_delay = 1000
 
@@ -274,7 +300,7 @@ class Visualizer:
 
             current_time = pygame.time.get_ticks()
             elapsed = current_time - last_step_time
-            
+
             if elapsed >= step_delay:
                 self.current_turn += 1
                 last_step_time = current_time
@@ -286,7 +312,7 @@ class Visualizer:
             # On passe la progression à la méthode de dessin
             self.draw_map(progress)
             pygame.display.flip()
-            
+
             clock.tick(60)
 
         pygame.quit()
